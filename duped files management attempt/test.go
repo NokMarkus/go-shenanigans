@@ -12,14 +12,18 @@ import (
 
 func hashFile(file_path string) (string, error) {
 	file_Content, err := os.Open(file_path)
+
 	if err != nil {
 		return "", err
 	}
+
 	defer file_Content.Close()
 	hash := sha256.New()
+
 	if _, err := io.Copy(hash, file_Content); err != nil {
 		return "", err
 	}
+
 	hashInBytes := hash.Sum(nil)
 	return fmt.Sprintf("%x", hashInBytes), nil
 }
@@ -29,21 +33,28 @@ func findHashDupes(folderDirs []string) (map[string][]string, error) {
 
 	for _, folderDir := range folderDirs {
 		err := filepath.Walk(folderDir, func(path string, info os.FileInfo, err error) error {
+
 			if err != nil {
 				return err
 			}
+
 			if !info.IsDir() {
 				hash, err := hashFile(path)
+
 				if err != nil {
 					return err
 				}
+
 				hashesOfFiles[hash] = append(hashesOfFiles[hash], path)
 			}
 			return nil
+
 		})
+
 		if err != nil {
 			return nil, err
 		}
+
 	}
 
 	return hashesOfFiles, nil
@@ -58,6 +69,7 @@ func deleteDupes(duplicates map[string][]string, keepOriginal bool) error {
 
 			for _, file := range files {
 				info, err := os.Stat(file)
+
 				if err != nil {
 					fmt.Println("yo what the heck, can't even get file info for", file, err)
 					continue
@@ -71,16 +83,20 @@ func deleteDupes(duplicates map[string][]string, keepOriginal bool) error {
 
 			for _, file := range files {
 				if file != latestFile {
+
 					fmt.Println("\noops, another duplicate... deleting: ", file)
 					err := os.Remove(file)
+
 					if err != nil {
 						fmt.Println("lol couldn't delete that one: ", file, err)
 						continue
 					}
+
 					fmt.Println("byeee, boomed: ", file)
 				} else if keepOriginal {
 					fmt.Println("keeping the freshest one, congrats: ", file)
 				}
+
 			}
 		}
 	}
@@ -88,18 +104,24 @@ func deleteDupes(duplicates map[string][]string, keepOriginal bool) error {
 }
 
 func deleteAllDupes(duplicates map[string][]string) error {
+
 	for _, files := range duplicates {
 		if len(files) > 1 {
+
 			for _, file := range files {
 				fmt.Println("\noops, say hello to my little friend: ", file)
 				err := os.Remove(file)
+
 				if err != nil {
 					fmt.Println("lol couldn't delete that one: ", file, err)
 					continue
 				}
+
 				fmt.Println("just boomed: ", file)
 			}
+
 		}
+
 	}
 	return nil
 }
@@ -108,6 +130,7 @@ func main() {
 	fmt.Println("yo, let me cook")
 
 	homeDir, err := os.UserHomeDir()
+
 	if err != nil {
 		fmt.Println("uhh... senior dev, can’t find user dir, help pls:", err)
 		return
@@ -118,6 +141,7 @@ func main() {
 	}
 
 	duplicates, err := findHashDupes(folderDirs)
+
 	if err != nil {
 		fmt.Println("bruh, error finding dupes:", err)
 		return
@@ -126,14 +150,18 @@ func main() {
 	if len(duplicates) > 0 {
 		for hash, files := range duplicates {
 			if len(files) > 1 {
-				fmt.Println("\nyo, these files share the same mama (hash): ", hash)
+
+				fmt.Println("\nyo, these files share the same mother (hash): ", hash)
+
 				for _, file := range files {
 					fmt.Println("here’s the nightmare: ", file)
 				}
+
 			}
 		}
 
-		fmt.Println("\nso... what’s the move?")
+		fmt.Println("\nso... what do u want?")
+
 		fmt.Println("1. delete everything, no one’s special (no files kept).")
 		fmt.Println("2. delete the dupes and keep the freshest one.")
 		fmt.Println("3. skip it, you just wanna see the hashes.")
@@ -144,20 +172,28 @@ func main() {
 		switch strings.TrimSpace(choice) {
 		case "1":
 			err := deleteAllDupes(duplicates)
+
 			if err != nil {
 				fmt.Println("yo, couldn’t delete those dupes, wtf:", err)
 			}
+
 		case "2":
 			err := deleteDupes(duplicates, true)
+
 			if err != nil {
 				fmt.Println("yo, couldn’t delete those dupes, wtf:", err)
 			}
+
 		case "3":
-			fmt.Println("ight bud, skipping deletes. you just wanted the dough.")
+			fmt.Println("ight bud, skipping deletes you just wanted the sauceeeeeee.")
+
 		default:
-			fmt.Println("yo, that’s not an option, but whatever. skipping anyway.")
+			fmt.Println("not an option. skipping tho.")
 		}
+
 	} else {
-		fmt.Println("no dupes found, you’re clear, no worries.")
+
+		fmt.Println("no dupes found.")
+
 	}
 }
